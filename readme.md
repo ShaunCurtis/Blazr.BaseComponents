@@ -1,6 +1,8 @@
 # Building Blazor Base Components
 
-In this article I'll decribe how to build three base components you can use in your Blazor applications.  They form a hierarchy: changing the inheritance to a higher level base simply adds extra functionality.  The top level component is a *Black Box Replacement* for `ComponentBase` with some added features.  Change the inheritance on `FetchData` or `Counter` or any other component and you won't see a difference.
+## Introduction
+
+This articles describes how to build a suite of three base components for Blazor.
 
 Before I dive into the detail, consider this simple component which displays a Bootstrap Alert.
 
@@ -34,13 +36,21 @@ Before I dive into the detail, consider this simple component which displays a B
 }
 ```
 
-This uses very little of the functionality built into `ComponentBase`.  There's no lifecycle code, no UI events or after render code.
+It uses little of the functionality built into `ComponentBase`.  There's no lifecycle code, no UI events or after render code.
 
-> Consider how many times instances of this type of component are loaded into memory every day.  And then how many times they get re-rendered.  A huge number of calls to lifecycle async methods, constructing and then disposing Task state machines for nothing.  Lot's of memory occupied doing sweet nothing.  CPU cycles and memory you (and the planet) are paying for and wasting every second.
+> Consider how many times instances of components like this are loaded into memory every day, and how many times they needlessly re-rendered.  A huge number of calls to lifecycle async methods, constructing and then disposing Task state machines for no reason.  Lot's of CPU cycles and memory you (and the planet) are paying for and wasted every second.
 
 Such components cry out for a simpler, smaller footprint base component.
 
 I'll stick my neck out [based on my own experience] and speculate that 99% of all components are candidates for lighter weight base components.
+
+In this article I'll decribe how to build these simpler, smaller footprint base components.  There are three.  They form a simple hierarchy: the lowest component implements the core functionality needed by all components, the higher components adds extra functionality.  The top level component is a *Black Box* replacement for `ComponentBase` with some added features.  
+
+You can change the inheritance on `FetchData` or `Counter` or any other component you use, and you won't see any difference.
+
+## Repository
+
+The repository for this article is [Blazr.BaseComponents](https://github.com/ShaunCurtis/Blazr.BaseComponents).
 
 ## The Three Components
 
