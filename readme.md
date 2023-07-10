@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This articles describes how to build a suite of three base components for Blazor.
+This article describes how to build a suite of three base components for Blazor.
 
 Before I dive into the detail, consider this simple component which displays a Bootstrap Alert.
 
@@ -62,9 +62,9 @@ The repository for this article is [Blazr.BaseComponents](https://github.com/Sha
 
 ## BlazrBaseComponent
 
-All the components inherit from `BlazrBaseComponent`.
+All the components inherit from `BlazrBaseComponent`.  Its the base class for the base components!
 
-`BlazrBaseComponent` is a standard class that implements the basic boiler plate code used by components.  It's abstract and doesn't implement `IComponent`.
+It's a standard class that implements the boiler plate code used by all components.  It's abstract and doesn't implement `IComponent`.  Inheriting classes implement `IComponent`, and can either set `SetParametersAsync` as `virtual`, or fix it. 
 
 It replicates many of the same variables and properties of `ComponentBase`.
 
@@ -119,7 +119,7 @@ More about the frame/wrapper functionality later.
     }
 ```
 
-The rest of the code replicates that implemented in `ComponentBase`.
+The rest of the code replicates essential methods from `ComponentBase`.
 
 `RenderAsync` is an additional method that renders the component immediately.  It works by calling `StateHasChanged` and immediately yielding by calling `await Task.Yield()`. The caller yields back to the Render and  frees the UI Synchronisation Context: the Renderer services it's queue and renders the component.
 
@@ -732,11 +732,11 @@ The code uses `_message`, `_alertType` and `_dismissible` class variables to con
 
 ## Summing Up
 
-Hopefully I've demonstrated how to step away from the expensive `ComponentBase` in your Blazor applications.  Take the plunge.
+I've demonstrated that you don't need to be stuck with `ComponentBase` in your Blazor applications.  
 
-If you start using them, you'll find that `BlazrControlBase` satisfies almost all your needs.
+Take the plunge. Start using my component suite.  Make `BlazrControlBase` your main base component.
 
-Though I've included `BlazrComponentBase`, I never use it.  I only use `ComponentBase` where I used components that inherit from it such as the `InputBase` edit controls.
+I've included `BlazrComponentBase`, but I must confess to never using it.  I only use `ComponentBase` where I used components that inherit from it such as the `InputBase` edit controls.
 
 ## Appendix
 
