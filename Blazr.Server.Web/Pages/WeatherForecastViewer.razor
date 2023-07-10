@@ -1,0 +1,52 @@
+﻿@page "/WeatherForecast/{Id:int}"
+@inject WeatherForecastService service
+@inherits BlazrControlBase
+<h3>Weather Forecast Viewer</h3>
+
+<div class="bg-dark text-white m-2 p-2">
+    @if (_record is not null)
+    {
+        <pre>Id : @_record.Id </pre>
+        <pre>Name : @_record.Date </pre>
+        <pre>Temp C : @_record.TemperatureC </pre>
+        <pre>Temp F : @_record.TemperatureF </pre>
+        <pre>Summary : @_record.Summary </pre>
+    }
+    else
+    {
+        <pre>No Record Loaded</pre>
+    }
+</div>
+
+<div class="m-3 text-end">
+    <div class="btn-group">
+        @foreach (var forecast in _forecasts)
+        {
+            <a class="btn @this.SelectedCss(forecast.Id)" href="@($"/WeatherForecast/{forecast.Id}")">@forecast.Id</a>
+        }
+    </div>
+</div>
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private WeatherForecast? _record;
+    private IEnumerable<WeatherForecast> _forecasts = Enumerable.Empty<WeatherForecast>();
+
+    private int _id;
+
+    private string SelectedCss(int value)
+        => _id == value ? "btn-primary" : "btn-outline-primary";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (NotInitialized)
+            _forecasts = await service.GetForecastsAsync();
+
+        var hasIdChanged = this.Id != _id;
+
+        _id = this.Id;
+
+        if (hasIdChanged)
+            _record = await service.GetForecastAsync(this.Id);
+    }
+}

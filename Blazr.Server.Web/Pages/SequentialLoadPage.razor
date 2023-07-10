@@ -1,0 +1,24 @@
+﻿@page "/Load"
+<h3>SequentialLoadPage</h3>
+
+<div class="bg-dark text-white m-2 p-2">
+    <pre>@this.Log.ToString()</pre>
+</div>
+@code {
+    private StringBuilder Log = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await GetData();
+    }
+
+    private async Task GetData()
+    {
+        for(var counter = 1; counter <= 10; counter++)
+        {
+            this.Log.AppendLine($"Fetched Record {counter}");
+            //await this.RenderAsync();
+            await Task.Delay(500);
+        }
+    }
+}

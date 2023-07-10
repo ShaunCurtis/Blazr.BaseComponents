@@ -1,0 +1,29 @@
+﻿@inherits BlazrUIBase
+
+@if (Message is not null)
+{
+    <div class="alert @_alertType">
+        @this.Message
+    </div>
+}
+
+@code {
+    [Parameter] public string? Message { get; set; }
+    [Parameter] public AlertType MessageType { get; set; } = BasicAlert.AlertType.Info;
+
+    private string _alertType => this.MessageType switch
+    {
+        AlertType.Success => "alert-success",
+        AlertType.Warning => "alert-warning",
+        AlertType.Error => "alert-danger",
+        _ =>  "alert-primary"
+    };
+
+    public enum AlertType
+    {
+        Info,
+        Success,
+        Error,
+        Warning,
+    }
+}

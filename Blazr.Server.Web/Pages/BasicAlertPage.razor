@@ -1,0 +1,41 @@
+﻿@page "/BasicAlertPage"
+@inherits BlazrControlBase
+<PageTitle>Index</PageTitle>
+
+<h1>Hello, world!</h1>
+
+Welcome to your new app.
+
+<div class="m-2">
+    <button class="btn btn-success" @onclick=this.SendSuccess>Set Message</button>
+    <button class="btn btn-danger" @onclick=this.SendError>Set Message</button>
+    <button class="btn btn-primary" @onclick=this.ClearMessage>Clear Message</button>
+</div>
+
+<div class="m-4">
+    <BasicAlert Message=@_message MessageType=_alertType />
+</div>
+
+@code {
+    private string? _message;
+    private BasicAlert.AlertType _alertType = BasicAlert.AlertType.Info;
+    private string _timeString => $"Set at {DateTime.Now.ToLongTimeString()}";
+
+    private void SendSuccess()
+    {
+        _message = _timeString;
+        _alertType = BasicAlert.AlertType.Success;
+    }
+
+    private void SendError()
+    {
+        _message = _timeString;
+        _alertType = BasicAlert.AlertType.Error;
+    }
+
+    private void ClearMessage()
+    {
+        _message = null;
+        _alertType = BasicAlert.AlertType.Info;
+    }
+}

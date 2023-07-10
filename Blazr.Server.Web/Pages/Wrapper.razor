@@ -1,0 +1,13 @@
+﻿@inherits BlazrControlBase
+
+@*Code Here is redundant*@
+
+@code {
+    protected override RenderFragment Frame => (__builder) => 
+    {
+        <h2 class="text-primary">Welcome To Blazor</h2>
+        <div class="border border-1 border-primary rounded-3 bg-light p-2">
+            @this.Body
+        </div>
+    };
+}

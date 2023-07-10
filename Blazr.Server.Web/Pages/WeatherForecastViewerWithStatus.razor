@@ -1,0 +1,76 @@
+﻿@page "/WeatherForecastWithStatus/{Id:int}"
+@inject WeatherForecastService service
+@inherits BlazrControlBase
+
+<h3>Weather Forecast Viewer</h3>
+
+<Alert @bind-Message=_message IsDismissible=_dismissible MessageType=_alertType/>
+
+<div class="bg-dark text-white m-2 p-2">
+    @if (_record is not null)
+    {
+        <pre>Id : @_record.Id </pre>
+        <pre>Name : @_record.Date </pre>
+        <pre>Temp C : @_record.TemperatureC </pre>
+        <pre>Temp F : @_record.TemperatureF </pre>
+        <pre>Summary : @_record.Summary </pre>
+    }
+    else
+    {
+        <pre>No Record Loaded</pre>
+    }
+</div>
+
+<div class="m-3 text-end">
+    <div class="btn-group">
+        @foreach (var forecast in _forecasts)
+        {
+            <a class="btn @this.SelectedCss(forecast.Id)" href="@($"/WeatherForecastWithStatus/{forecast.Id}")">@forecast.Id</a>
+        }
+    </div>
+</div>
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private WeatherForecast? _record;
+    private IEnumerable<WeatherForecast> _forecasts = Enumerable.Empty<WeatherForecast>();
+    private string? _message;
+    private bool _dismissible;
+    private Alert.AlertType _alertType = Alert.AlertType.Info;
+
+    private int _id;
+
+    private string SelectedCss(int value)
+        => _id == value ? "btn-primary" : "btn-outline-primary";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _dismissible = false;
+
+        if (NotInitialized)
+        {
+            _message = "Initializing";
+            _alertType = Alert.AlertType.Warning;
+            await this.RenderAsync();
+            _forecasts = await service.GetForecastsAsync();
+        }
+
+        var hasIdChanged = this.Id != _id;
+
+        _id = this.Id;
+
+        if (hasIdChanged)
+        {
+            _message = "Loading";
+            _alertType = Alert.AlertType.Info;
+            await this.RenderAsync();
+            _record = await service.GetForecastAsync(this.Id);
+        }
+
+        _message = "Loaded";
+        _alertType = Alert.AlertType.Success;
+        _dismissible = true;
+        await this.RenderAsync();
+
+    }
+}

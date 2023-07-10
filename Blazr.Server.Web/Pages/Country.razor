@@ -1,0 +1,78 @@
+﻿@page "/Country/{Id:int}"
+@inherits BlazrControlBase
+<h3>Country Viewer</h3>
+
+<div class="bg-dark text-white m-2 p-2">
+    @if (_record is not null)
+    {
+        <pre>Id : @_record.Id </pre>
+        <pre>Name : @_record.Name </pre>
+    }
+    else
+    {
+        <pre>No Record Loaded</pre>
+    }
+</div>
+
+<div class="m-3 text-end">
+    <div class="btn-group">
+        @foreach (var country in CountryProvider.Countries)
+        {
+            <a class="btn @this.SelectedCss(country.Id)" href="@($"/Country/{country.Id}")">@country.Id</a>
+        }
+    </div>
+</div>
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private CountryRecord? _record;
+    private int _id;
+
+    private string SelectedCss(int value)
+        => _id == value ? "btn-primary" : "btn-outline-primary";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var hasRecordChanged = this.Id != _id;
+
+        if(NotInitialized)
+        {
+            // Do your intiel stuff in here
+        }
+
+        _id = this.Id;
+        if (hasRecordChanged)
+            _record = await CountryProvider.GetRecordAsync(this.Id);
+    }
+
+    public record CountryRecord(int Id, string Name);
+
+    public static class CountryProvider
+    {
+        public static IEnumerable<CountryRecord> Countries
+        {
+            get
+            {
+                _countries ??= GetCountries();
+                return _countries.AsEnumerable();
+            }
+        }
+
+        private static List<CountryRecord>? _countries;
+
+        private static List<CountryRecord> GetCountries() => new List<CountryRecord>
+            {
+             new(1, "UK"),
+             new(2, "France"),
+             new(3, "Portugal"),
+             new(4, "Spain"),
+            };
+
+        public static async ValueTask<CountryRecord?> GetRecordAsync(int id)
+        {
+            // fake an async operation
+            await Task.Delay(100);
+            return Countries.FirstOrDefault(item => item.Id == id);
+        }
+    }
+}

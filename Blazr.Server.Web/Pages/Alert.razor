@@ -1,0 +1,44 @@
+﻿@inherits BlazrUIBase
+
+@if (Message is not null)
+{
+    <div class="@_css">
+        @this.Message
+        @if(this.IsDismissible)
+        {
+            <button type="button" class="btn-close" @onclick=this.Dismiss>
+            </button>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public string? Message { get; set; }
+    [Parameter] public bool IsDismissible { get; set; }
+    [Parameter] public EventCallback<string?> MessageChanged { get; set; }
+    [Parameter] public AlertType MessageType { get; set; } = Alert.AlertType.Info;
+
+    private string _css => new CSSBuilder("alert")
+        .AddClass(_alertType)
+        .AddClass(this.IsDismissible, "alert-dismissible")
+        .Build();
+    
+        private void Dismiss()
+            => MessageChanged.InvokeAsync(null);
+
+    private string _alertType => this.MessageType switch
+    {
+        AlertType.Success => "alert-success",
+        AlertType.Warning => "alert-warning",
+        AlertType.Error => "alert-danger",
+        _ => "alert-primary"
+    };
+
+    public enum AlertType
+    {
+        Info,
+        Success,
+        Error,
+        Warning,
+    }
+}

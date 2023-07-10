@@ -1,0 +1,44 @@
+﻿@page "/AlertPage"
+@inherits BlazrUIBase
+<PageTitle>Index</PageTitle>
+
+<h1>Hello, world!</h1>
+
+Welcome to your new app.
+
+<div class="m-2">
+    <button class="btn btn-success" @onclick="() => this.SetMessageAsync(_timeString)">Set Message</button>
+    <button class="btn btn-danger" @onclick="() => this.SetMessageAsync(null)">Clear Message</button>
+</div>
+
+<div class="m-3 p-2 border border-1 border-success rounded-3">
+    <h5>Dismisses Correctly</h5>
+    <Alert @bind-Message:get=_message1 @bind-Message:set=this.OnUpdateMessage MessageType=Alert.AlertType.Success IsDismissible=true />
+</div>
+
+<div class="m-3 p-2 border border-1 border-danger rounded-3">
+    <h5>Does Not Dismiss</h5>
+    <Alert Message=@_message2 MessageType=Alert.AlertType.Error IsDismissible=true />
+</div>
+
+@code {
+    private string? _message1;
+    private string? _message2;
+    private string _timeString => $"Set at {DateTime.Now.ToLongTimeString()}";
+
+    private Task OnUpdateMessage(string? value)
+    {
+        _message1 = value;
+        this.StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private Task SetMessageAsync(string? message)
+    {
+        _message1 = message;
+        _message2 = message;
+        this.StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+}

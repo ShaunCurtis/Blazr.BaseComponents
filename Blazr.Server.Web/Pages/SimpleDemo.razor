@@ -1,0 +1,22 @@
+﻿@page "/SimpleDemo"
+
+@inherits BlazrControlBase
+
+<PageTitle>Index</PageTitle>
+
+<h1>Hello, world!</h1>
+
+<div class="m-2">
+    <button class="btn btn-primary" @onclick=this.UpdateMessage>Update Alert</button>
+</div>
+
+<Alert @bind-Message=@_message />
+
+@code {
+    private string? _message;
+
+    private void UpdateMessage()
+    {
+        _message = $"Clicked at {DateTime.Now.ToLongTimeString()}";
+    }
+}
