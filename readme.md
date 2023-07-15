@@ -842,6 +842,17 @@ public class BlazrComponentBase : BlazrBaseComponent, IComponent, IHandleEvent, 
 And CssBuilder:
 
 ```csharp
+/// ============================================================
+/// Modification Author: Shaun Curtis, Cold Elm Coders
+/// License: Use And Donate
+/// If you use it, donate something to a charity somewhere
+/// 
+/// Original code based on CSSBuilder by Ed Charbeneau
+/// and other implementations
+/// 
+/// https://github.com/EdCharbeneau/BlazorComponentUtilities/blob/master/BlazorComponentUtilities/CssBuilder.cs
+/// ============================================================
+
 public sealed class CSSBuilder
 {
     private Queue<string> _cssQueue = new Queue<string>();

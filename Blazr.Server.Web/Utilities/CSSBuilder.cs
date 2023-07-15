@@ -1,7 +1,12 @@
 ﻿/// ============================================================
-/// Author: Shaun Curtis, Cold Elm Coders
+/// Modification Author: Shaun Curtis, Cold Elm Coders
 /// License: Use And Donate
 /// If you use it, donate something to a charity somewhere
+/// 
+/// Original code based on CSSBuilder by Ed Charbeneau
+/// and other implementations
+/// 
+/// https://github.com/EdCharbeneau/BlazorComponentUtilities/blob/master/BlazorComponentUtilities/CssBuilder.cs
 /// ============================================================
 namespace Blazr.Components;
 
