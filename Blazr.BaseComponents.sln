@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blazr.Server.Web", "Blazr.S
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{97AB4871-A20F-4E63-9EFE-73EB50DAF098}"
 	ProjectSection(SolutionItems) = preProject
+		DocumentationArticle.md = DocumentationArticle.md
+		Package.md = Package.md
 		readme.md = readme.md
 	EndProjectSection
 EndProject

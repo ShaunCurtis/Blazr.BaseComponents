@@ -1,0 +1,98 @@
+﻿@page "/AsyncOnInitialized"
+@using System.Diagnostics;
+
+<PageTitle>Documented Async OnInitialized</PageTitle>
+
+@{
+    this.Log($"Render Component.");
+}
+
+<h1>The OnAfterRender Myth</h1>
+
+<div class="bg-dark text-white mt-5 m-2 p-2">
+    <pre>@_state</pre>
+</div>
+
+@code {
+    private string? _state = "New";
+
+    private string _id = Guid.NewGuid().ToString().Substring(0, 4);
+    private string _type => this.GetType().Name;
+
+    public async override Task SetParametersAsync(ParameterView parameters)
+    {
+        this.Log($"SetParametersAsync started.");
+        await base.SetParametersAsync(parameters);
+        this.Log($"SetParametersAsync completed.");
+    }
+
+    protected override async void OnInitialized()
+    {
+        this.Log($"OnInitialized Started.");
+        _state = "Loading";
+        StateHasChanged();
+        await Task.Delay(1);
+        TaskSync();
+        this.Log($"OnInitialized Continuation.");
+        _state = "Loaded";
+        this.Log($"OnInitialized Completed.");
+    }
+
+    protected override Task OnInitializedAsync()
+    {
+        this.Log($"OnInitializedAsync.");
+        return Task.CompletedTask;
+    }
+
+    protected override void OnParametersSet()
+    {
+        this.Log($"OnParametersSet.");
+    }
+
+    protected override Task OnParametersSetAsync()
+    {
+        this.Log($"OnParametersSetAsync.");
+        return Task.CompletedTask;
+    }
+
+    protected override bool ShouldRender()
+    {
+        this.Log($"ShouldRender.");
+        return true;
+    }
+
+    private void TaskSync()
+        => Thread.Sleep(1000);
+
+    private async Task TaskAsync()
+        => await Task.Yield();
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            this.Log($"First OnAfterRender.");
+            StateHasChanged();
+        }
+        else
+            this.Log($"Subsequent OnAfterRender.");
+    }
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            this.Log($"First OnAfterRenderAsync.");
+        }
+        else
+            this.Log($"Subsequent OnAfterRenderAsync.");
+        return Task.CompletedTask;
+    }
+
+    private void Log(string message)
+    {
+        message = $"{_id} - {_type} => {message}";
+        Debug.WriteLine(message);
+        Console.WriteLine(message);
+    }
+}

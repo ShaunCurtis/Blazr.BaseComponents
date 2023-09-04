@@ -1,0 +1,46 @@
+﻿@page "/documentedcomponentbase"
+@using System.Diagnostics
+@inherits DocumentedComponentBase
+<h3>Documented Component Base</h3>
+
+<div class="m-2 p-2">
+<button class="btn btn-primary" @onclick="this.Update">Update</button>
+</div>
+
+@if (_message is not null)
+{
+    <div class="alert alert-warning">@_message</div>
+}
+
+@code {
+    private string? _message;
+
+    protected override void OnInitialized()
+    {
+        Debug.WriteLine($"OnInitialized");
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        Debug.WriteLine($"OnInitializedAsync");
+        await Task.Delay(10);
+    }
+
+    protected override void OnParametersSet()
+    {
+        Debug.WriteLine($"OnParametersSet");
+    }
+
+    protected async override Task OnParametersSetAsync()
+    {
+        Debug.WriteLine($"OnParametersSetAsync");
+        await Task.Delay(10);
+    }
+
+    private async Task Update()
+    {
+        StateHasChanged();
+        await Task.Delay(100);
+        _message = $"Updated at {DateTime.Now.ToLongTimeString()}";
+    }
+}

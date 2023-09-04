@@ -1,9 +1,18 @@
-<Project Sdk="Microsoft.NET.Sdk.Razor">
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <Title>Blazr Base Component Library</Title>
+    <Company>Cold Elm Coders</Company>
+    <Authors>Shaun Curtia</Authors>
+    <Description>A base component library to replace ComponentBase</Description>
+    <Copyright>Use and Donate</Copyright>
+    <RepositoryUrl>https://github.com/ShaunCurtis/Blazr.BaseComponents</RepositoryUrl>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageLicenseFile>license.txt</PackageLicenseFile>
+    <PackageReadmeFile>Package.md</PackageReadmeFile>
   </PropertyGroup>
 
 
@@ -12,11 +21,25 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="7.0.7" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="7.0.10" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Services\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\Package.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="license.txt">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>
