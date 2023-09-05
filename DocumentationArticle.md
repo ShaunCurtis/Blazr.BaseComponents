@@ -1,8 +1,23 @@
 # Debugging Blazor Components
 
-Debugging Blazor components is not simple.  We don't control their lifecycle and much of the activity within a component is async.  Examining the component state at a break point can often be misleading.
+Debugging Blazor components is not simple.  We don't control their lifecycle, and much of the activity within a component is async.  Examining the component state at a break point can often be misleading.
 
-I'll start this article with a short coding journey: someone new to Blazor building a simple data page.  It demonstrates the debugging dilemna and provides the scenario for the rest of the article.
+This article describes a fairly standard early Blazor coding experience and uses the code to demonstrate how to document and understand the component processes.
+
+## Overview
+
+I start this article with a short coding journey: someone new to Blazor building a simple data page.  It demonstrates the debugging dilemna and provides the scenario for the rest of the article.
+
+The rest of the article walks through how to document the sequence of events within a component and introduces the `DocumentatedComponentBase` component to do automated logging.
+
+Finally I provide some background information on some of the key processes.
+
+## Repository and Packages
+
+The code for this article is part of the [Blazor.BaseComponent library](https://github.com/ShaunCurtis/Blazr.BaseComponents/).
+
+The `DocumentatedComponentBase` component is available in the `Blazr.BaseComponents` [Nuget Package](https://www.nuget.org/packages/Blazr.BaseComponents/).
+
 
 ## My First Blazor Page
 
