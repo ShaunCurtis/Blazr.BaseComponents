@@ -256,7 +256,7 @@ Run this and we can now see the sequence of events.
 30af - AsyncOnInitialized => Subsequent OnAfterRenderAsync.
 ```
 
-At  line 3 things start to go wrong. `OnInitializedAsync` and the rest of the lifecycle processes run to completion [including the final render], before at line 8 the `OnInitialized` continuation runs and `OnInitialized` completes.  It's become detacted from the lifecycle because `SetParametersAsync` had no Task returned to await.
+At  line 3 things start to go wrong. `OnInitializedAsync` and the rest of the lifecycle processes run to completion [including the final render], before at line 8 the `OnInitialized` continuation runs and `OnInitialized` completes.  `OnInitialized` has become detacted from the lifecycle because `SetParametersAsync` had no Task returned to await.
 
 At line 10 `OnAfterRender` is run and calls `StateHasChanged` which renders the component, and kicks off the second `OnAfterRender` cycle.
 
@@ -302,9 +302,6 @@ Refactoring the initial sync code from above is easy.  Change the inheritance to
 ```
 This is the output. 
 
-1. `2c5b` is the first 4 chars of the component unique Id: normally enough to identify it when logger several components.
-2.  `AsyncOnInitializedDocumented` is the class name.
-
 > I copy and paste the output into a text file and then annotate it.
 
 ```text
@@ -326,7 +323,7 @@ This is the output.
 2c5b - AsyncOnInitializedDocumented => OnAfterRenderAsync Completed
 ```
 
-The state is set and reset on lines 5 AND 6 before `StateHasChanged` is called on line 9 and the render takes place at line 13.  You can clearly see that `_state` is `Loaded` when the component actually renders on line 13.  There's no magic render between lines 5 ans 6.
+The state is set and reset on lines 5 AND 6 before `StateHasChanged` is called on line 9 and the render takes place at line 13.  You can clearly see that `_state` is `Loaded` when the component actually renders on line 13.  There's no magic render between lines 5 and 6.
 
 ### Documenting The Async Solution
 
@@ -390,7 +387,7 @@ cf89 - AsyncOnInitializedAsyncDocumented => OnAfterRenderAsync Completed
 
 Note:
   
-  1. At line 5 you get a yield from the await and between lines 5 and 11 a full component render cycle.  Once the async method completes you get the second full component render cycle. 
+  1. At line 5 there is a yield from the `await` and between lines 5 and 11 a full component render cycle.  Once the async method completes there's the second full component render cycle. 
   2. The `OnInitialized{Async}/OnParametersSet{Async}` sequence executes in the correct order.
 
 Make one change to the code [shortening the delay to 1ms]:
@@ -427,6 +424,8 @@ e945 - AsyncOnInitializedAsyncDocumented => OnAfterRenderAsync Started
 e945 - AsyncOnInitializedAsyncDocumented => OnAfterRenderAsync Completed
 ```
 
+The change in sequence is driven by how long it takes proceses to complete and the order they are queued on the `Synchronisation Context`.
+
 ## Summing Up
 
 What have we learned:
@@ -434,7 +433,7 @@ What have we learned:
 1. Don't mix Async and Sync Code.  The mantra is *Async All The Way*.
 2. `StateHasChanged` rarely solves your problem.  It either doesn't work or masks underlying logic issues.
 3. Running non JSInterop code in `OnAfterRender` may appear to solve the problem, but you inevitably need to call `StateHasChanged`.  Point 2 above then applies.  You do more renders than you need to.
-4. There are no bugs in the Component code: they are in your code!  The behaviour you see is intentional.
+4. There are no bugs in the Component code.  The behaviour you see is intentional.
 5. Get your code logic correct and everything falls into place.
 6. Don't trust break points in components to tell you the true state story.
 
@@ -442,6 +441,10 @@ Some important points to note:
 
 1. `StateHasChanged` doesn't render the component.  It just places the component's `RenderFragment` on the Render Queue. The Renderer needs thread time on the `Synchronisation Context` to actually do the render.  That only happens when your code yields [through a yielding async method] or completes.
 
-2. `OnAfterRender` is not part of the `OnInitialized{Async}/OnParametersSet{Async}` sequence.  It's an event handler that gets called once the component has rendered [just as a button click handler gets called if you click a button].  because it's triggered by a different process, there's no guarantee when it will run.
+2. `OnAfterRender` is not part of the `OnInitialized{Async}/OnParametersSet{Async}` sequence.  It's an event handler that gets called once the component has rendered [just as a button click handler gets called if you click a button].  Because it's triggered by a different process, there's no guarantee when it will run [as demonstrated in the two examples above].
 
 3. Component state mutation belongs in `OnInitialized{Async}/OnParametersSet{Async}`.    Don't mutate the state in `OnAfterRender{Async}`.  It's illogical: you must then call `StateHasChanged` [and do another render cycle] to reflect those changes in the UI.
+
+### The Synchronisation Context
+
+A `Synchronisation Context` is a virtual thread that all UI code runs on.  It's asynchronous, but guarantees a single thread of execution i.e. there is only ever one piece of code running on the context.  You can read more about it [here](https://learn.microsoft.com/en-us/aspnet/core/blazor/components/synchronization-context?view=aspnetcore-7.0).
