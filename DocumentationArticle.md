@@ -6,7 +6,7 @@ This article describes a fairly standard early Blazor coding experience and uses
 
 ## Overview
 
-I start this article with a short coding journey: someone new to Blazor building a simple data page.  It demonstrates the debugging dilemna and provides the scenario for the rest of the article.
+I start this article with a short coding journey: someone new to Blazor building a simple data page.  It demonstrates the debugging dilemma and provides the component code for the rest of the article.
 
 The rest of the article walks through how to document the sequence of events within a component and introduces the `DocumentatedComponentBase` component to do automated logging.
 
@@ -103,7 +103,7 @@ I complete the change.  It compiles so it's probably OK.
 
 I get is the opposite.  *Loading*, but no completion to `Loaded`.
 
-Now confused and fustrated, I carry on searching.
+Now confused and frustrated, I carry on searching.
 
 ### OnAfterRender
 
@@ -117,7 +117,7 @@ And I find some stuff about `OnAfterRender`.  I add it to my code.
     }
 ```
 
-I'm hoping it will work and [sigh of relief] it does.  I don't know why [or I kid myself that I do know why]. It works, so *problem solved*.  
+I'm hoping it will work and [sigh of relief] it does.  I don't know why [maybe I kid myself that I do]. It works, so *problem solved*.  
 
 I've learned a new pattern to code this type of scenario.  I move on and use it elsewhere.  
 
@@ -256,7 +256,7 @@ Run this and we can now see the sequence of events.
 30af - AsyncOnInitialized => Subsequent OnAfterRenderAsync.
 ```
 
-At  line 3 things start to go wrong. `OnInitializedAsync` and the rest of the lifecycle processes run to completion [including the final render], before at line 8 the `OnInitialized` continuation runs and `OnInitialized` completes.  `OnInitialized` has become detacted from the lifecycle because `SetParametersAsync` had no Task returned to await.
+At  line 3 things start to go wrong. `OnInitializedAsync` and the rest of the lifecycle processes run to completion [including the final render], before at line 8 the `OnInitialized` continuation runs and `OnInitialized` completes.  `OnInitialized` has become detached from the lifecycle because `SetParametersAsync` had no Task returned to await.
 
 At line 10 `OnAfterRender` is run and calls `StateHasChanged` which renders the component, and kicks off the second `OnAfterRender` cycle.
 
@@ -424,7 +424,7 @@ e945 - AsyncOnInitializedAsyncDocumented => OnAfterRenderAsync Started
 e945 - AsyncOnInitializedAsyncDocumented => OnAfterRenderAsync Completed
 ```
 
-The change in sequence is driven by how long it takes proceses to complete and the order they are queued on the `Synchronisation Context`.
+The change in sequence is driven by how long it takes processes to complete and the order they are queued on the `Synchronisation Context`.
 
 ## Summing Up
 
@@ -447,4 +447,4 @@ Some important points to note:
 
 ### The Synchronisation Context
 
-A `Synchronisation Context` is a virtual thread that all UI code runs on.  It's asynchronous, but guarantees a single thread of execution i.e. there is only ever one piece of code running on the context.  You can read more about it [here](https://learn.microsoft.com/en-us/aspnet/core/blazor/components/synchronization-context?view=aspnetcore-7.0).
+A `Synchronisation Context` is a virtual thread that all UI code runs on.  It's asynchronous, but guarantees a single thread of execution i.e. i.e. there is only ever one piece of code executing on the context. No two operations execute concurrently. You can read more about it [here](https://learn.microsoft.com/en-us/aspnet/core/blazor/components/synchronization-context?view=aspnetcore-7.0).
