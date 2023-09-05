@@ -45,9 +45,7 @@
     }
 
     protected override void OnParametersSet()
-    {
-        this.Log($"OnParametersSet.");
-    }
+        => this.Log($"OnParametersSet.");
 
     protected override Task OnParametersSetAsync()
     {
@@ -81,11 +79,11 @@
     protected override Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
-        {
             this.Log($"First OnAfterRenderAsync.");
-        }
+
         else
             this.Log($"Subsequent OnAfterRenderAsync.");
+
         return Task.CompletedTask;
     }
 
