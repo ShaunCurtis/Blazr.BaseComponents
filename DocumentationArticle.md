@@ -1,6 +1,6 @@
 # Debugging Blazor Components
 
-Debugging Blazor components is not simple.  We aren't in charge of their lifecycle and much of the activity within a component is async.  The component state at break points is often misleading.
+Debugging Blazor components is not simple.  We don't control their lifecycle and much of the activity within a component is async.  Examining the component state at a break point can often be misleading.
 
 I'll start this article with a short coding journey: someone new to Blazor building a simple data page.  It demonstrates the debugging dilemna and provides the scenario for the rest of the article.
 
@@ -9,6 +9,8 @@ I'll start this article with a short coding journey: someone new to Blazor build
 I want to make a database call to get some data.  I perceive it will take a while, so I want to display *Loading* while it's happening.  I'm *keeping it simple*: steering clear of the *async* dark art.
 
 What I code is this.  It's all synchronous, with a blocking `Thread.Sleep` to emulate a slow data store call.
+
+*My expectation is that when I set `_state = "Loading"`, the component will [somehow] register that state change and re-render on the spot.*
 
 ```csharp
 @page "/"
@@ -39,13 +41,13 @@ What I code is this.  It's all synchronous, with a blocking `Thread.Sleep` to em
 
 What I get is a blank screen and then *Loaded*: no intermediate *Loading*.
 
-*My expectation is that when I set `_state = "Loading"`, the component will [somehow] register that state change and re-render on the spot.*
-
 I go searching.
 
 ### StateHasChanged
 
-I find out about `StateHasChanged` and update my code. I'm now expecting the component to render immediately after I've set `_state`.
+I find out about `StateHasChanged` and update my code. 
+
+*I'm now expecting the component to render immediately after I've set `_state`.*
 
 ```caharp
     protected override void OnInitialized()
@@ -57,17 +59,21 @@ I find out about `StateHasChanged` and update my code. I'm now expecting the com
     }
 ```
 
-But to no avail.  What is going on?  "There's a bug in the MS Component code" is a common conclusion.
+But to no avail.  What is going on?  "Maybe I've found a bug in the MS Component code".
+
+I do more searching.
 
 ### Task.Delay
 
-I search further and find `await Task.Delay(1)`.  Looks asynchronous, but let's try it in my code.  I start typing `await` and the Visual Studio editor automatically adds an `async` to my method:
+I find `await Task.Delay(1)`.  Looks asynchronous, but let's try it in my code.  I start typing `await` and the Visual Studio editor automatically adds an `async` to my method:
 
 ```csharp
     protected override async void OnInitialized()
 ```
 
-I complete the change, and it compiles.  It must be OK.
+I complete the change.  It compiles so it's probably OK.
+
+*I'm expecting it to work, but not clear why.*
 
 ```csharp
     protected override async void OnInitialized()
@@ -80,9 +86,9 @@ I complete the change, and it compiles.  It must be OK.
     }
 ```
 
-Now what I get is the opposite.  *Loading*, but no completion to `Loaded`.
+I get is the opposite.  *Loading*, but no completion to `Loaded`.
 
-Confused and fustrated, I do more searching.
+Now confused and fustrated, I carry on searching.
 
 ### OnAfterRender
 
@@ -96,21 +102,21 @@ And I find some stuff about `OnAfterRender`.  I add it to my code.
     }
 ```
 
-Great.  At last.  It works.
+I'm hoping it will work and [sigh of relief] it does.  I don't know why [or I kid myself that I do know why]. It works, so *problem solved*.  
 
-I'm a little confused, but *problem solved*.  I've learned a pattern to code this type of problem.    I move on and start to use the pattern elsewhere.  
+I've learned a new pattern to code this type of scenario.  I move on and use it elsewhere.  
 
 ### What I Failed To Learn
 
-The real answer to the problem above is obvious to more experienced coders.  You can't mix the sync and async worlds.  Use `OnInitializedAsync` and async database operations.
+The real solution to the problem is obvious to more experienced coders.  You can't mix the sync and async worlds. `async void` is a deadly concoction in most situations.  Use `OnInitializedAsync` and async database operations.
 
-> Me. I'm taking my first steps down Blazor and SPA road.  My sync/async car wreck is still days or weeks down the road.  In the interim, I've learned a "dirty" anti-pattern that "works".  I may even share it!
+> Me. I'm just taking my first steps down Blazor and SPA road.  My `async void` car wreck is still days or weeks down the road.  In the interim, I've learned a "dirty" anti-pattern that "works".  I may even share it!
 
-## So, How Do I Debug Components?
+## How To Debug Components
 
 ### Debug.WriteLine/Console.WriteLine
 
-To debug components effecively, you need to output information real time.  `Debug.WriteLine` and `Console.WriteLine` are your life lines.
+To debug components effectively, you need to output information real time.  `Debug.WriteLine` and `Console.WriteLine` are your life lines.
 
 > I call this *documenting* rather that *debugging*.  You aren't using break points, just logging what's happening and picking it apart later.
 
@@ -235,13 +241,13 @@ Run this and we can now see the sequence of events.
 30af - AsyncOnInitialized => Subsequent OnAfterRenderAsync.
 ```
 
-At  line 3 things start to go wrong. `OnInitializedAsync` and the rest of the lifecycle processes run to completion before at line 8 the `OnInitialized` continuation runs and `OnInitialized` completes, including the final render.  It's become diverced from the lifecycle because `SetParametersAsync` had no Task returned to await.
+At  line 3 things start to go wrong. `OnInitializedAsync` and the rest of the lifecycle processes run to completion [including the final render], before at line 8 the `OnInitialized` continuation runs and `OnInitialized` completes.  It's become detacted from the lifecycle because `SetParametersAsync` had no Task returned to await.
 
 At line 10 `OnAfterRender` is run and calls `StateHasChanged` which renders the component, and kicks off the second `OnAfterRender` cycle.
 
 ## Documented ComponentBase
 
-In the above example we've added a lot of manual logging code.  Do that regularly is tedious.  Also, there are things you can't log easily because you can't get to internal processes in `ComponentBase`.
+In the example I've added a lot of manual logging code.  Doing that regularly is time consuming and tedious.  Whilst most information can be logged, it's a bit clunky as there's no access to the internal `ComponentBase` processes.
 
 This is where `DocumentedComponentBase` comes in.  It's a black box version of `ComponentBase` that provides full logging of the internal processes.
 
@@ -249,7 +255,7 @@ This is where `DocumentedComponentBase` comes in.  It's a black box version of `
 
 ### Documenting AsyncOnInitialized
 
-Take our initial sync code from above.  Change the inheritance to `DocumentedComponentBase` and add a `Log` line in where we set `_state`. `Log` is a protected method provided by `DocumentedComponentBase`.
+Refactoring the initial sync code from above is easy.  Change the inheritance to `DocumentedComponentBase` and add a `Log` line in where we set `_state`. `Log` is a protected method provided by `DocumentedComponentBase`.
 
 ```csharp
 @page "/AsyncOnInitializedDocumented"
@@ -279,7 +285,12 @@ Take our initial sync code from above.  Change the inheritance to `DocumentedCom
         => Thread.Sleep(1000);
 }
 ```
-This is the output.
+This is the output. 
+
+1. `2c5b` is the first 4 chars of the component unique Id: normally enough to identify it when logger several components.
+2.  `AsyncOnInitializedDocumented` is the class name.
+
+> I copy and paste the output into a text file and then annotate it.
 
 ```text
 ===========================================
@@ -300,7 +311,7 @@ This is the output.
 2c5b - AsyncOnInitializedDocumented => OnAfterRenderAsync Completed
 ```
 
-The state is set and reset on lines 5 AND 6 before `StateHasChanged` is called on line 9 and the render takes place at line 13.  You can clearly see that `_state` is `Loaded` when the component actually renders on line 13.
+The state is set and reset on lines 5 AND 6 before `StateHasChanged` is called on line 9 and the render takes place at line 13.  You can clearly see that `_state` is `Loaded` when the component actually renders on line 13.  There's no magic render between lines 5 ans 6.
 
 ### Documenting The Async Solution
 
@@ -348,7 +359,7 @@ cf89 - AsyncOnInitializedAsyncDocumented => OnInitialized - State set to Loading
 cf89 - AsyncOnInitializedAsyncDocumented => StateHasChanged Called
 cf89 - AsyncOnInitializedAsyncDocumented => Render Queued
 cf89 - AsyncOnInitializedAsyncDocumented => Component Rendered
-cf89 - AsyncOnInitializedAsyncDocumented => OnAfterRenderAsync Started
+[10] => cf89 - AsyncOnInitializedAsyncDocumented => OnAfterRenderAsync Started
 [11] => cf89 - AsyncOnInitializedAsyncDocumented => OnAfterRenderAsync Completed
 cf89 - AsyncOnInitializedAsyncDocumented => OnInitialized - State set to Loaded.
 cf89 - AsyncOnInitializedAsyncDocumented => OnInitialized sequence Completed
@@ -367,6 +378,40 @@ Note:
   1. At line 5 you get a yield from the await and between lines 5 and 11 a full component render cycle.  Once the async method completes you get the second full component render cycle. 
   2. The `OnInitialized{Async}/OnParametersSet{Async}` sequence executes in the correct order.
 
+Make one change to the code [shortening the delay to 1ms]:
+
+```
+private async Task TaskAsync()
+    => await Task.Delay(1);
+```
+
+Examine the output and note that the first `OnAfterRenderAsync` has moved from line 10 to line 18.  It's changed from executing immediately after the first render to the end of the process. 
+
+```text
+===========================================
+e945 - AsyncOnInitializedAsyncDocumented => Component Initialized
+e945 - AsyncOnInitializedAsyncDocumented => Component Attached
+e945 - AsyncOnInitializedAsyncDocumented => SetParametersAsync Started
+e945 - AsyncOnInitializedAsyncDocumented => OnInitialized sequence Started
+e945 - AsyncOnInitializedAsyncDocumented => OnInitialized - State set to Loading.
+e945 - AsyncOnInitializedAsyncDocumented => Awaiting Task completion
+e945 - AsyncOnInitializedAsyncDocumented => StateHasChanged Called
+e945 - AsyncOnInitializedAsyncDocumented => Render Queued
+e945 - AsyncOnInitializedAsyncDocumented => Component Rendered
+e945 - AsyncOnInitializedAsyncDocumented => OnInitialized - State set to Loaded.
+e945 - AsyncOnInitializedAsyncDocumented => OnInitialized sequence Completed
+e945 - AsyncOnInitializedAsyncDocumented => OnParametersSet Sequence Started
+e945 - AsyncOnInitializedAsyncDocumented => StateHasChanged Called
+e945 - AsyncOnInitializedAsyncDocumented => Render Queued
+e945 - AsyncOnInitializedAsyncDocumented => Component Rendered
+e945 - AsyncOnInitializedAsyncDocumented => OnParametersSet Sequence Completed
+e945 - AsyncOnInitializedAsyncDocumented => SetParametersAsync Completed
+[18] => e945 - AsyncOnInitializedAsyncDocumented => OnAfterRenderAsync Started
+e945 - AsyncOnInitializedAsyncDocumented => OnAfterRenderAsync Completed
+e945 - AsyncOnInitializedAsyncDocumented => OnAfterRenderAsync Started
+e945 - AsyncOnInitializedAsyncDocumented => OnAfterRenderAsync Completed
+```
+
 ## Summing Up
 
 What have we learned:
@@ -382,6 +427,6 @@ Some important points to note:
 
 1. `StateHasChanged` doesn't render the component.  It just places the component's `RenderFragment` on the Render Queue. The Renderer needs thread time on the `Synchronisation Context` to actually do the render.  That only happens when your code yields [through a yielding async method] or completes.
 
-2. `OnAfterRender` is not part of the `OnInitialized{Async}/OnParametersSet{Async}` sequence.  It's an event handler that gets called once the component has rendered [just as a button click handler gets called if you click a button].
+2. `OnAfterRender` is not part of the `OnInitialized{Async}/OnParametersSet{Async}` sequence.  It's an event handler that gets called once the component has rendered [just as a button click handler gets called if you click a button].  because it's triggered by a different process, there's no guarantee when it will run.
 
 3. Component state mutation belongs in `OnInitialized{Async}/OnParametersSet{Async}`.    Don't mutate the state in `OnAfterRender{Async}`.  It's illogical: you must then call `StateHasChanged` [and do another render cycle] to reflect those changes in the UI.
