@@ -6,13 +6,14 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Title>Blazr Base Component Library</Title>
     <Company>Cold Elm Coders</Company>
-    <Authors>Shaun Curtia</Authors>
+    <Authors>Shaun Curtis</Authors>
     <Description>A base component library to replace ComponentBase</Description>
     <Copyright>Use and Donate</Copyright>
     <RepositoryUrl>https://github.com/ShaunCurtis/Blazr.BaseComponents</RepositoryUrl>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageLicenseFile>license.txt</PackageLicenseFile>
     <PackageReadmeFile>Package.md</PackageReadmeFile>
+    <Version>1.0.1</Version>
   </PropertyGroup>
 
 

@@ -1,1 +1,1 @@
-See the repository at [Blazr.BaseComponents](https://github.com/ShaunCurtis/Blazr.BaseComponents).
+See the repository at [Blazr.BaseComponents](https://github.com/ShaunCurtis/Blazr.BaseComponents) for release notes and references.
