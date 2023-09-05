@@ -1,14 +1,14 @@
 # Debugging Blazor Components
 
-I'll start this article with a short story.
+Debugging components is a lot more that just putting in some break pointa and checking values.  Components operate in an async world.  By the time you check a value in the debugger, it's may well have changed.
+
+I'll start this article with a short coding story.  This is a simple page to illustrate to debugging dilemna [and how myths can be born].
 
 ## My First Blazor Page
 
-This is a simple page to illustrate how myths can be born.  You are making a database call to get some data and want to display *Loading* while it's happening.  You're *keeping it simple*, steering well clear of the *async* dark art.
+  I'm making a database call to get some data and want to display *Loading* while it's happening.  I'm *keeping it simple*, steering well clear of the *async* dark art.
 
-What you code is this. 
-
-What you get is a blank screen and then *Loaded*: no *Loading*.
+What I code is this. 
 
 ```csharp
 @page "/"
@@ -37,11 +37,11 @@ What you get is a blank screen and then *Loaded*: no *Loading*.
 }
 ```
 
+And what I get is a blank screen and then *Loaded*: no intermediate *Loading*.
+
 ### StateHasChanged
 
-You go searching, find `StateHasChanged` and update your code.
-
-But to no avail.
+I start searching, find `StateHasChanged` and update my code.
 
 ```caharp
     protected override void OnInitialized()
@@ -53,17 +53,17 @@ But to no avail.
     }
 ```
 
+But to no avail.  What is going on?  Is there a bug in the MS Component code?
+
 ### Task.Delay
 
-You search further and find `await Task.Delay(1)`.  You start typing `await` and the Visual Studio editor adds an `async` to your method:
+I search further and find `await Task.Delay(1)`.  I start typing `await` and the Visual Studio editor adds an `async` to my method:
 
 ```csharp
     protected override async void OnInitialized()
 ```
 
-You complete your change.
-
-What you get is the opposite of what you had.  *Loading*, but no completion to `Loaded`.
+I complete the change.
 
 ```csharp
     protected override async void OnInitialized()
@@ -76,11 +76,11 @@ What you get is the opposite of what you had.  *Loading*, but no completion to `
     }
 ```
 
+What I get is the opposite.  *Loading*, but no completion to `Loaded`.
+
 ### OnAfterRender
 
-More searching reveals `OnAfterRender`.  You add it to your code.
-
-Great, it now works as expected.
+More searching reveals `OnAfterRender`.  I add it to my code.
 
 ```csharp
     protected override void OnAfterRender(bool firstRender)
@@ -90,17 +90,17 @@ Great, it now works as expected.
     }
 ```
 
-You move on thinking *problem solved* and start to use the pattern elsewhere.
+Great, it now works.
 
-### The Obvious Answer
+*problem solved*, I move on and start to use the pattern elsewhere.  
 
-The real answer to the problem above is obvious to a more experienced coder: use `OnInitializedAsync` and async database operations.  But to the person new to Blazor and SPA's, that's days or weeks down the road.  Meanwhile, they've learned a "dirty" anti-pattern that "works".   A myth is perpetuated, some voodoo magic is acquired (which may get propogate), the car wreck is futher down the road.
+### The Not So Obvious Answer
 
-## Debugging
+The real answer to the problem above is obvious to a more experienced coder: use `OnInitializedAsync` and async database operations.  But to me, taking my first steps into Blazor and SPA's, my car wreck is still days or weeks down the road.  In the interim, I've learned a "dirty" anti-pattern that "works".   A myth is perpetuated: some voodoo magic acquired (that I may propogate).
 
-Debugging components is a lot more that just putting in some break pointa and checking values.  Components operate in an async world.  By the time you check a value in the debugger, it's may well have changed.
+## Debug.WriteLine
 
-You need to output information realtime.  `Debug.WriteLine` and `Console.WriteLine` are life savers.
+To debug components effecively, you need to output information realtime.  `Debug.WriteLine` and `Console.WriteLine` are your life savers.
 
 Take the code above, add some logging as shown below.
 
@@ -210,14 +210,17 @@ We can now see the sequence.
 ```text
 30af - AsyncOnInitialized => SetParametersAsync started.
 30af - AsyncOnInitialized => OnInitialized Started.
+// 1
 30af - AsyncOnInitialized => OnInitializedAsync.
 30af - AsyncOnInitialized => OnParametersSet.
 30af - AsyncOnInitialized => OnParametersSetAsync.
 30af - AsyncOnInitialized => SetParametersAsync completed.
 30af - AsyncOnInitialized => Render Component.
+// 2
 30af - AsyncOnInitialized => OnInitialized Continuation.
 30af - AsyncOnInitialized => OnInitialized Completed.
 30af - AsyncOnInitialized => First OnAfterRender.
+// 3
 30af - AsyncOnInitialized => ShouldRender.
 30af - AsyncOnInitialized => Render Component.
 30af - AsyncOnInitialized => First OnAfterRenderAsync.
@@ -225,6 +228,128 @@ We can now see the sequence.
 30af - AsyncOnInitialized => Subsequent OnAfterRenderAsync.
 ```
 
+At  **1** things go awry. `OnInitializedAsync` and the rest of the lifecycle processes run to completion before at **2** the `OnInitialized` continuation runs and `OnInitialized` completes, including the final render.  It's become diverced from the lifecycle because `SetParametersAsync` had no Task returned to await.
+
+At **3** `OnAfterRender` is run and calls `StateHasChanged` which renders the component, and kicks off the second `OnAfterRender` cycle.
 
 
+## Docuemented ComponentBase
 
+`DocumentedComponentBase` is a black box version of `ComponentBase` that provides full documentation of the internal processes.  It's available in the `Blazr.BaseComponents` library from Nuget.
+
+Take our original sync code, inherit from `DocumentedComponentBase` and add a `Log` line in where we set `_state`.
+
+```csharp
+@page "/AsyncOnInitializedDocumented"
+@inherits DocumentedComponentBase
+
+<PageTitle>Documented Async OnInitialized</PageTitle>
+
+<h1>Documented Async OnInitialized</h1>
+
+<div class="bg-dark text-white mt-5 m-2 p-2">
+    <pre>@_state</pre>
+</div>
+
+@code {
+    private string? _state = "New";
+
+    protected override void OnInitialized()
+    {
+        this.Log($"OnInitialized - State set to Loading.");
+        _state = "Loading";
+        TaskSync();
+        this.Log($"OnInitialized - State set to Loaded.");
+        _state = "Loaded";
+    }
+
+    private void TaskSync()
+        => Thread.Sleep(1000);
+}
+```
+This is the output.
+
+The state is set and reset at **1** before `StateHasChanged` is called at **2** and the actual render takes place at **3**.
+
+```text
+===========================================
+2c5b - AsyncOnInitializedDocumented => Component Initialized
+2c5b - AsyncOnInitializedDocumented => Component Attached
+2c5b - AsyncOnInitializedDocumented => SetParametersAsync Started
+2c5b - AsyncOnInitializedDocumented => OnInitialized sequence Started
+// 1
+2c5b - AsyncOnInitializedDocumented => OnInitialized - State set to Loading.
+2c5b - AsyncOnInitializedDocumented => OnInitialized - State set to Loaded.
+2c5b - AsyncOnInitializedDocumented => OnInitialized sequence Completed
+2c5b - AsyncOnInitializedDocumented => OnParametersSet Sequence Started
+2c5b - AsyncOnInitializedDocumented => StateHasChanged Called
+// 2
+2c5b - AsyncOnInitializedDocumented => Render Queued
+2c5b - AsyncOnInitializedDocumented => OnParametersSet Sequence Completed
+2c5b - AsyncOnInitializedDocumented => SetParametersAsync Completed
+// 3
+2c5b - AsyncOnInitializedDocumented => Component Rendered
+2c5b - AsyncOnInitializedDocumented => OnAfterRenderAsync Started
+2c5b - AsyncOnInitializedDocumented => OnAfterRenderAsync Completed
+```
+
+Now move on to the fully async version:
+
+```csharp
+@page "/AsyncOnInitializedAsyncDocumented"
+@inherits DocumentedComponentBase
+
+<PageTitle>Documented Async OnInitializedAsync</PageTitle>
+
+<h1>Documented Async OnInitializedAsync</h1>
+
+<div class="bg-dark text-white mt-5 m-2 p-2">
+    <pre>@_state</pre>
+</div>
+
+@code {
+    private string? _state = "New";
+
+    protected override async Task OnInitializedAsync()
+    {
+        this.Log($"OnInitialized - State set to Loading.");
+        _state = "Loading";
+        await TaskAsync();
+        this.Log($"OnInitialized - State set to Loaded.");
+        _state = "Loaded";
+    }
+
+    private async Task TaskAsync()
+        => await Task.Delay(1000);
+}
+```
+
+And you get this.  Note that at **1** you get a yield from the await and  between **1** and **2** a full component render cycle.  Once the async method completes you get the second full component render cycle. 
+
+
+```text
+===========================================
+cf89 - AsyncOnInitializedAsyncDocumented => Component Initialized
+cf89 - AsyncOnInitializedAsyncDocumented => Component Attached
+cf89 - AsyncOnInitializedAsyncDocumented => SetParametersAsync Started
+cf89 - AsyncOnInitializedAsyncDocumented => OnInitialized sequence Started
+cf89 - AsyncOnInitializedAsyncDocumented => OnInitialized - State set to Loading.
+// 1
+cf89 - AsyncOnInitializedAsyncDocumented => Awaiting Task completion
+cf89 - AsyncOnInitializedAsyncDocumented => StateHasChanged Called
+cf89 - AsyncOnInitializedAsyncDocumented => Render Queued
+cf89 - AsyncOnInitializedAsyncDocumented => Component Rendered
+cf89 - AsyncOnInitializedAsyncDocumented => OnAfterRenderAsync Started
+cf89 - AsyncOnInitializedAsyncDocumented => OnAfterRenderAsync Completed
+// 2
+cf89 - AsyncOnInitializedAsyncDocumented => OnInitialized - State set to Loaded.
+cf89 - AsyncOnInitializedAsyncDocumented => OnInitialized sequence Completed
+cf89 - AsyncOnInitializedAsyncDocumented => OnParametersSet Sequence Started
+cf89 - AsyncOnInitializedAsyncDocumented => StateHasChanged Called
+cf89 - AsyncOnInitializedAsyncDocumented => Render Queued
+cf89 - AsyncOnInitializedAsyncDocumented => Component Rendered
+cf89 - AsyncOnInitializedAsyncDocumented => OnParametersSet Sequence Completed
+cf89 - AsyncOnInitializedAsyncDocumented => SetParametersAsync Completed
+cf89 - AsyncOnInitializedAsyncDocumented => OnAfterRenderAsync Started
+cf89 - AsyncOnInitializedAsyncDocumented => OnAfterRenderAsync Completed
+```

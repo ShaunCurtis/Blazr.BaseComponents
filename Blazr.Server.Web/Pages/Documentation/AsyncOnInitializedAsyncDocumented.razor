@@ -1,0 +1,26 @@
+﻿@page "/AsyncOnInitializedAsyncDocumented"
+@inherits DocumentedComponentBase
+
+<PageTitle>Documented Async OnInitializedAsync</PageTitle>
+
+<h1>Documented Async OnInitializedAsync</h1>
+
+<div class="bg-dark text-white mt-5 m-2 p-2">
+    <pre>@_state</pre>
+</div>
+
+@code {
+    private string? _state = "New";
+
+    protected override async Task OnInitializedAsync()
+    {
+        this.Log($"OnInitialized - State set to Loading.");
+        _state = "Loading";
+        await TaskAsync();
+        this.Log($"OnInitialized - State set to Loaded.");
+        _state = "Loaded";
+    }
+
+    private async Task TaskAsync()
+        => await Task.Delay(1000);
+}

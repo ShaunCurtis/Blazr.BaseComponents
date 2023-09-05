@@ -38,7 +38,7 @@ public class DocumentedComponentBase : IComponent, IHandleEvent, IHandleAfterRen
             _renderPending = false;
             _hasNeverRendered = false;
             BuildRenderTree(builder);
-            this.Log("Component RenderFragment Run");
+            this.Log("Component Rendered");
         };
 
         this.Log("Component Initialized");
@@ -111,11 +111,11 @@ public class DocumentedComponentBase : IComponent, IHandleEvent, IHandleAfterRen
 
     public void StateHasChanged()
     {
-        this.Log("StateHasChanged Started");
+        this.Log("StateHasChanged Called");
 
         if (_renderPending)
         {
-            this.Log("StateHasChanged Already Queued.. Aborted");
+            this.Log("Render Already Queued.. Aborted");
             return;
         }
 
@@ -123,12 +123,12 @@ public class DocumentedComponentBase : IComponent, IHandleEvent, IHandleAfterRen
 
         if (shouldRender)
         {
-            this.Log("StateHasChanged Queued");
+            this.Log("Render Queued");
             _renderPending = true;
             _renderHandle.Render(_content);
         }
         else
-            this.Log("StateHasChanged - Should Render is false");
+            this.Log("No Render Queued - Should Render is false");
     }
 
     async Task IHandleEvent.HandleEventAsync(EventCallbackWorkItem item, object? obj)
@@ -179,13 +179,13 @@ public class DocumentedComponentBase : IComponent, IHandleEvent, IHandleAfterRen
     protected Task InvokeAsync(Func<Task> workItem)
         => _renderHandle.Dispatcher.InvokeAsync(workItem);
 
-    private void Log(string message) 
+    protected void Log(string message) 
     {
         message = $"{_id} - {_type} => {message}";
         Debug.WriteLine(message);
         Console.WriteLine(message );
     }
-    private void LogBreak()
+    protected void LogBreak()
     {
         var message = $"===========================================";
         Debug.WriteLine(message);
